@@ -48,6 +48,41 @@ const server = http.createServer((req, res) => {
         });
     }
 
+    else if (req.method === 'PUT' && req.url.startsWith('/movies/')) {
+        const id = parseInt(req.url.split('/')[2]);
+
+        let body = '';
+
+        req.on('data', chunk => {
+            body += chunk;
+        });
+
+        req.on('end', () => {
+            const updatedData = JSON.parse(body);
+
+            let movies = JSON.parse(fs.readFileSync(FILE));
+
+            let found = false;
+
+            movies = movies.map(m => {
+                if (m.id === id) {
+                    found = true;
+                    return { ...m, ...updatedData };
+                }
+                return m;
+            });
+
+            if (!found) {
+                res.statusCode = 404;
+                return res.end("Movie not found");
+            }
+
+            fs.writeFileSync(FILE, JSON.stringify(movies, null, 2));
+
+            res.end("Movie updated");
+        });
+    }
+
     else if (req.method === 'DELETE' && req.url.startsWith('/movies/')) {
         const id = parseInt(req.url.split('/')[2]);
 
