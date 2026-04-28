@@ -11,6 +11,21 @@ const server = http.createServer((req, res) => {
         res.end(data);
     }
 
+    else if (req.method === 'GET' && req.url.startsWith('/movies/')) {
+        const id = parseInt(req.url.split('/')[2]);
+
+        const movies = JSON.parse(fs.readFileSync(FILE));
+        const movie = movies.find(m => m.id === id);
+
+        if (!movie) {
+            res.statusCode = 404;
+            return res.end("Movie not found");
+        }
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(movie));
+    }
+
     else if (req.method === 'POST' && req.url === '/movies') {
         let body = '';
 
@@ -31,6 +46,22 @@ const server = http.createServer((req, res) => {
             res.writeHead(201, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify(newMovie));
         });
+    }
+
+    else if (req.method === 'DELETE' && req.url.startsWith('/movies/')) {
+        const id = parseInt(req.url.split('/')[2]);
+
+        let movies = JSON.parse(fs.readFileSync(FILE));
+        const newMovies = movies.filter(m => m.id !== id);
+
+        if (movies.length === newMovies.length) {
+            res.statusCode = 404;
+            return res.end("Movie not found");
+        }
+
+        fs.writeFileSync(FILE, JSON.stringify(newMovies, null, 2));
+
+        res.end("Movie deleted");
     }
 
     else {
